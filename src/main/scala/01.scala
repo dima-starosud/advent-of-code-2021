@@ -2,7 +2,7 @@ import scala.io.Source
 
 @main def hello: Unit =
   val numbers = Source
-    .fromURL(getClass.getResource("/01/1.txt"))
+    .fromURL(getClass.getResource("/01.txt"))
     .getLines()
     .map(_.toInt)
 
