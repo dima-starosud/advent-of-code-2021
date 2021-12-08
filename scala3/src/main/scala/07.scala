@@ -51,13 +51,17 @@ val CRABS = Vector(
 )
 
 @main def day7(): Unit =
-  val solution = (CRABS.min to CRABS.max)
-    .map { position =>
-      CRABS.map { crab =>
-        val steps = (crab - position).abs;
-        (1 + steps) * steps / 2;
-      }.sum
-    }
-    .min
+  val crabs = CRABS.groupMapReduce(identity)(Function.const(1))(_ + _)
+  val solution =
+    (CRABS.min to CRABS.max)
+      .map { position =>
+        crabs
+          .map { (crab, count) =>
+            val steps = (crab - position).abs;
+            count * (1 + steps) * steps / 2;
+          }
+          .sum
+      }
+      .min
 
   println(solution)
