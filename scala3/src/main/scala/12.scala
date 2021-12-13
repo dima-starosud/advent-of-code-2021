@@ -5,22 +5,31 @@ import scala.util.control.Exception.catching
 final class Cave(val name: String):
   var neighbors = Seq.empty[Cave]
 
-final case class PathStat(last: Cave, counts: Map[String, Int]):
+final case class PathStat(last: Cave, start: Int = 0, end: Int = 0, twoTimes: Option[String] = None, visited: Set[String] = Set.empty):
   def tryAppend(next: Cave): Option[PathStat] =
     if next.name.forall(_.isUpper) then
-      Some(this.copy(last = next))
+      Some(copy(last = next))
     else if next.name.forall(_.isLower) then
-      val newPath = this.copy(
-        last = next,
-        counts = this.counts.updatedWith(next.name)(v => Some(v.getOrElse(0) + 1)),
-      )
-      if newPath.counts.values.count(_ == 2) <= 1
-        && newPath.counts.values.forall(_ <= 2)
-        && newPath.counts.getOrElse("start", 1) == 1
-        && newPath.counts.getOrElse("end", 1) == 1 then
-        Some(newPath)
-      else
-        None
+      next.name match {
+        case "start" =>
+          start match {
+            case 0 => Some(copy(last = next, start = 1))
+            case 1 => None
+          }
+        case "end" =>
+          end match {
+            case 0 => Some(copy(last = next, end = 1))
+            case 1 => None
+          }
+        case nextName =>
+          if visited.contains(nextName) then
+            if twoTimes.nonEmpty then
+              None
+            else
+              Some(copy(last = next, twoTimes = Some(nextName)))
+          else
+            Some(copy(last = next, visited = visited + nextName))
+      }
     else
       throw IllegalArgumentException(next.name)
 
@@ -84,7 +93,7 @@ final case class PathStat(last: Cave, counts: Map[String, Int]):
 
   var resultPaths = Vector.empty[PathStat]
   var partialPaths = Vector(
-    PathStat(last = caves("end"), counts = Map("end" -> 1))
+    PathStat(last = null).tryAppend(caves("end")).get
   )
 
   while partialPaths.nonEmpty do
@@ -102,5 +111,5 @@ final case class PathStat(last: Cave, counts: Map[String, Int]):
   println(resultPaths.size)
   val endTime = System.currentTimeMillis()
   val elapsed = endTime - startTime
-  // elapsed = 832 millis
+  // elapsed = 407 millis
   println(s"elapsed = $elapsed millis")
