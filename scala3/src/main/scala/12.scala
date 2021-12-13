@@ -5,6 +5,8 @@ import scala.util.control.Exception.catching
 final class Cave(val name: String):
   var neighbors = Seq.empty[Cave]
 
+final case class PathStat(last: Cave, counts: Map[String, Int])
+
 @main def day12(): Unit =
   val startTime = System.currentTimeMillis()
   val lines_1 =
@@ -62,11 +64,13 @@ final class Cave(val name: String):
     cave(n1).neighbors :+= cave(n2)
     cave(n2).neighbors :+= cave(n1)
 
-  var resultPaths = Vector.empty[Vector[Cave]]
-  var partialPaths = Vector(Vector(caves("end")))
+  var resultPaths = Vector.empty[PathStat]
+  var partialPaths = Vector(
+    PathStat(last = caves("end"), counts = Map("end" -> 1))
+  )
 
   while partialPaths.nonEmpty do
-    var newPartialPaths = Vector.empty[Vector[Cave]]
+    var newPartialPaths = Vector.empty[PathStat]
     for path <- partialPaths do
       for next <- path.last.neighbors
           path <- tryAppend(path, next) do
@@ -80,24 +84,22 @@ final class Cave(val name: String):
   println(resultPaths.size)
   val endTime = System.currentTimeMillis()
   val elapsed = endTime - startTime
-  // elapsed = 2874 millis
+  // elapsed = 832 millis
   println(s"elapsed = $elapsed millis")
 
 
-def tryAppend(path: Vector[Cave], next: Cave): Option[Vector[Cave]] =
-  val newPath = path :+ next
+def tryAppend(path: PathStat, next: Cave): Option[PathStat] =
   if next.name.forall(_.isUpper) then
-    Some(newPath)
+    Some(path.copy(last = next))
   else if next.name.forall(_.isLower) then
-    val smallCaveNames = newPath
-      .map(_.name)
-      .filter(_.forall(_.isLower))
-      .groupMapReduce(identity)(Function.const(1))(_ + _)
-
-    if smallCaveNames.values.count(_ == 2) <= 1
-      && smallCaveNames.values.forall(_ <= 2)
-      && smallCaveNames.getOrElse("start", 1) == 1
-      && smallCaveNames.getOrElse("end", 1) == 1 then
+    val newPath = path.copy(
+      last = next,
+      counts = path.counts.updatedWith(next.name)(v => Some(v.getOrElse(0) + 1)),
+    )
+    if newPath.counts.values.count(_ == 2) <= 1
+      && newPath.counts.values.forall(_ <= 2)
+      && newPath.counts.getOrElse("start", 1) == 1
+      && newPath.counts.getOrElse("end", 1) == 1 then
       Some(newPath)
     else
       None
