@@ -62,11 +62,11 @@ final class Cave(val name: String):
     cave(n1).neighbors :+= cave(n2)
     cave(n2).neighbors :+= cave(n1)
 
-  var resultPaths = Seq.empty[Seq[Cave]]
-  var partialPaths = Seq(Seq(caves("end")))
+  var resultPaths = Vector.empty[Vector[Cave]]
+  var partialPaths = Vector(Vector(caves("end")))
 
   while partialPaths.nonEmpty do
-    var newPartialPaths = Seq.empty[Seq[Cave]]
+    var newPartialPaths = Vector.empty[Vector[Cave]]
     for path <- partialPaths do
       for next <- path.last.neighbors
           path <- tryAppend(path, next) do
@@ -75,16 +75,16 @@ final class Cave(val name: String):
         else
           newPartialPaths :+= path
     partialPaths = newPartialPaths
-    println(s"resultPaths.size=${resultPaths.size}")
 
+  // 155477
   println(resultPaths.size)
   val endTime = System.currentTimeMillis()
-  val elapsed = (endTime - startTime) / 1000
-  // elapsed = 150 seconds
-  println(s"elapsed = $elapsed seconds")
+  val elapsed = endTime - startTime
+  // elapsed = 2874 millis
+  println(s"elapsed = $elapsed millis")
 
 
-def tryAppend(path: Seq[Cave], next: Cave): Option[Seq[Cave]] =
+def tryAppend(path: Vector[Cave], next: Cave): Option[Vector[Cave]] =
   val newPath = path :+ next
   if next.name.forall(_.isUpper) then
     Some(newPath)
