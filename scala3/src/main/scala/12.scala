@@ -5,7 +5,25 @@ import scala.util.control.Exception.catching
 final class Cave(val name: String):
   var neighbors = Seq.empty[Cave]
 
-final case class PathStat(last: Cave, counts: Map[String, Int])
+final case class PathStat(last: Cave, counts: Map[String, Int]):
+  def tryAppend(next: Cave): Option[PathStat] =
+    if next.name.forall(_.isUpper) then
+      Some(this.copy(last = next))
+    else if next.name.forall(_.isLower) then
+      val newPath = this.copy(
+        last = next,
+        counts = this.counts.updatedWith(next.name)(v => Some(v.getOrElse(0) + 1)),
+      )
+      if newPath.counts.values.count(_ == 2) <= 1
+        && newPath.counts.values.forall(_ <= 2)
+        && newPath.counts.getOrElse("start", 1) == 1
+        && newPath.counts.getOrElse("end", 1) == 1 then
+        Some(newPath)
+      else
+        None
+    else
+      throw IllegalArgumentException(next.name)
+
 
 @main def day12(): Unit =
   val startTime = System.currentTimeMillis()
@@ -73,7 +91,7 @@ final case class PathStat(last: Cave, counts: Map[String, Int])
     var newPartialPaths = Vector.empty[PathStat]
     for path <- partialPaths do
       for next <- path.last.neighbors
-          path <- tryAppend(path, next) do
+          path <- path.tryAppend(next) do
         if path.last.name.equals("start") then
           resultPaths :+= path
         else
@@ -86,22 +104,3 @@ final case class PathStat(last: Cave, counts: Map[String, Int])
   val elapsed = endTime - startTime
   // elapsed = 832 millis
   println(s"elapsed = $elapsed millis")
-
-
-def tryAppend(path: PathStat, next: Cave): Option[PathStat] =
-  if next.name.forall(_.isUpper) then
-    Some(path.copy(last = next))
-  else if next.name.forall(_.isLower) then
-    val newPath = path.copy(
-      last = next,
-      counts = path.counts.updatedWith(next.name)(v => Some(v.getOrElse(0) + 1)),
-    )
-    if newPath.counts.values.count(_ == 2) <= 1
-      && newPath.counts.values.forall(_ <= 2)
-      && newPath.counts.getOrElse("start", 1) == 1
-      && newPath.counts.getOrElse("end", 1) == 1 then
-      Some(newPath)
-    else
-      None
-  else
-    throw IllegalArgumentException(next.name)
