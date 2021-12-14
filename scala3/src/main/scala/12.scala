@@ -5,28 +5,29 @@ import scala.util.control.Exception.catching
 final class Cave(val name: String):
   var neighbors = Seq.empty[Cave]
 
-final case class PathStat(last: Cave, start: Int = 0, end: Int = 0, twoTimes: Option[String] = None, visited: Set[String] = Set.empty):
+final case class PathStat(last: Cave, start: Boolean = false, end: Boolean = false,
+                          twoTimes: Boolean = false, visited: Set[String] = Set.empty):
   def tryAppend(next: Cave): Option[PathStat] =
     if next.name.forall(_.isUpper) then
       Some(copy(last = next))
     else if next.name.forall(_.isLower) then
       next.name match {
         case "start" =>
-          start match {
-            case 0 => Some(copy(last = next, start = 1))
-            case 1 => None
-          }
+          if start then
+            None
+          else
+            Some(copy(last = next, start = true))
         case "end" =>
-          end match {
-            case 0 => Some(copy(last = next, end = 1))
-            case 1 => None
-          }
+          if end then
+            None
+          else
+            Some(copy(last = next, end = true))
         case nextName =>
           if visited.contains(nextName) then
-            if twoTimes.nonEmpty then
+            if twoTimes then
               None
             else
-              Some(copy(last = next, twoTimes = Some(nextName)))
+              Some(copy(last = next, twoTimes = true))
           else
             Some(copy(last = next, visited = visited + nextName))
       }

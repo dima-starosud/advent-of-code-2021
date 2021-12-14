@@ -10,3 +10,5 @@ add_executable(advent_of_code_2021_cpp_day_6 day_6/main.cpp day_6/input_small.h 
 add_executable(advent_of_code_2021_cpp_day_7 day_7/main.cpp day_7/types.h day_7/input_small.h day_7/input_big.h)
 
 add_executable(advent_of_code_2021_cpp_day_9 day_9/main.cpp)
+
+add_executable(advent_of_code_2021_cpp_day_12 day_12/main.cpp)
