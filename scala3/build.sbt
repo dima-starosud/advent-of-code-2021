@@ -13,4 +13,6 @@ lazy val root = project
     libraryDependencies += "org.jgrapht" % "jgrapht-core" % "1.5.1",
     // day 16
     libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.0",
+    // day 19
+    libraryDependencies += "org.apache.commons" % "commons-geometry-euclidean" % "1.0",
   )
