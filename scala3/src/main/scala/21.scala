@@ -1,3 +1,4 @@
+import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}
 
 
@@ -60,6 +61,35 @@ final case class Game(player1: Player, player2: Player, turn: 1 | 2 = 1):
       println(s"player1WinCount: $player1WinCount")
       println(s"player2WinCount: $player2WinCount")
 
+  println("---------------- Result ----------------")
+  println(s"player1WinCount: $player1WinCount")
+  println(s"player2WinCount: $player2WinCount")
+
+
+@main def day21Recursive(): Unit =
+  type Result = (Long, Long)
+  val cache = mutable.Map.empty[Game, Result]
+
+  def recursive(game: Game): Result =
+    cache.get(game) match {
+      case None =>
+      case Some(result) =>
+        return result
+    }
+
+    val result: Result =
+      if game.player1.score >= 21 then
+        (1, 0)
+      else if game.player2.score >= 21 then
+        (0, 1)
+      else
+        val (p1, p2) = game.go.map(recursive).unzip
+        (p1.sum, p2.sum)
+
+    cache(game) = result
+    result
+
+  val (player1WinCount, player2WinCount) = recursive(Game(Player(10, 0), Player(2, 0)))
   println("---------------- Result ----------------")
   println(s"player1WinCount: $player1WinCount")
   println(s"player2WinCount: $player2WinCount")
