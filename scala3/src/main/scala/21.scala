@@ -1,5 +1,4 @@
 import scala.collection.mutable
-import scala.util.control.Breaks.{break, breakable}
 
 
 final case class Player(position: Int, score: Int):
