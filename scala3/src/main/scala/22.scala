@@ -8,10 +8,8 @@ object Cube:
     case On, Off
 
   type Num = Long
-  type Point = (Num, Num, Num)
   type Range = NumericRange.Inclusive[Long]
-  // TODO pattern match on Tuples at compile time
-  type Cuboid = Vector[Range]
+  type Cuboid = (Range, Range, Range)
 
   object Parser extends RegexParsers :
     def line: Parser[(State, Cuboid)] = state ~ cuboid ^^ { case s ~ c => (s, c) }
@@ -19,7 +17,7 @@ object Cube:
     def state: Parser[State] = ("on" ~> success(State.On)) | ("off" ~> success(State.Off))
 
     def cuboid: Parser[Cuboid] = ("x=" ~> range) ~ (",y=" ~> range) ~ (",z=" ~> range) ^^ {
-      case xs ~ ys ~ zs => Vector(xs, ys, zs)
+      case xs ~ ys ~ zs => (xs, ys, zs)
     }
 
     def range: Parser[Range] = number ~ ".." ~ number ^^ {
@@ -37,10 +35,10 @@ object Cube:
       else
         Seq(range.min, other.min).max to Seq(range.max, other.max).min
 
-  def leftRanges(rules: Vector[(State, Cuboid)]): Vector[Range] =
-    rules
+  inline def leftRanges(actions: Vector[(State, Range *: _)]): Vector[Range] =
+    actions
       .flatMap {
-        case (state, qs +: qss) => Seq(qs.min, qs.max)
+        case (state, qs *: qss) => Seq(qs.min, qs.max)
       }
       .distinct
       .sorted
@@ -53,29 +51,29 @@ object Cube:
       .filter(_.nonEmpty)
       .toVector
 
-  def numberOfOn(rules: Vector[(State, Cuboid)], depth: Int = 3): Long =
-    if depth == 0 then
-      val lastIsOn =
-        rules
-          .map { case (state, Seq()) => state }
-          .lastOption
-          .exists(_ == State.On)
-      if lastIsOn then 1 else 0
-    else
-      leftRanges(rules)
-        .map { xr =>
-          xr.size * numberOfOn(
-            rules.flatMap {
-              case (state, qs +: qss) =>
-                val common = qs common xr
-                if common.isEmpty then None
-                else if common == xr then Some((state, qss))
-                else throw new RuntimeException(s"Impossible: $common != $xr")
-            },
-            depth - 1
-          )
-        }
-        .sum
+  inline def numberOfOn[T](actions: Vector[(State, T)]): Long =
+    inline actions match {
+      case actions: Vector[(State, EmptyTuple)] =>
+        val lastIsOn = actions.lastOption.exists(_._1 == State.On)
+        if lastIsOn then 1 else 0
+
+      case actions: Vector[(State, Range *: _)] =>
+        leftRanges(actions)
+          .map { xr =>
+            xr.size * numberOfOn(
+              actions.flatMap {
+                case (state, qs *: qss) =>
+                  val common = qs common xr
+                  if common.isEmpty then
+                    None
+                  else
+                    assert(common == xr, s"$common == $xr")
+                    Some((state, qss))
+              }
+            )
+          }
+          .sum
+    }
 
 
 @main def day22(): Unit =
@@ -152,10 +150,11 @@ object Cube:
       .strip()
       .linesIterator
 
-  val rules =
+  val actions =
     input
       .map(Cube.Parser.parseAll(Cube.Parser.line, _).get)
       .toVector
 
+  println("2758514936282235 <- right one")
   println("1294137045134837 <- right one")
-  println(numberOfOn(rules))
+  println(numberOfOn(actions))
